@@ -1,0 +1,83 @@
+*tanto el servidor como varios equipos se encuentran en la red  160.12.0.0
+conectados atraves de un switch 
+
+*lo que haremos es crear una vlan exclusiva para el servidor y 
+ el resto de los equipos seguiran conectados en red en la vlan por defecto
+
+--vlan2
+ Switch>enable
+ Switch#config t
+ Switch(config)#vlan 2
+ Switch(config-vlan)#name vlan2
+ Switch(config-vlan)#exit
+
+
+*el puerto fast ethernet 0/1 
+es el puerto con el que esta conectado el servidor y ese puerto estara
+asociado a la vlan2
+
+--asignacion de puerto vlan2
+ Switch(config)#int Fa0/1
+ Switch(config-if)#switchport access vlan 2
+ Switch(config-if)#exit
+
+
+*el puerto fast ethernet 0/2
+sera el puerto truncal que se conecta al router 
+
+--puerto truncal
+ Switch(config)#int Fa0/2
+ Switch(config-if)#switchport mode trunk
+ Switch(config-if)#exit
+
+
+*el resto de los puertos corresponde a las maquinas
+
+*cuando se configure el router se debera levantar el puerto fast ethernet 0/0
+y tambien el puerto serial 0/0/0 al puerto serial le asignaremos una direccion
+inventada por ejemplo 10.10.10.1 ya que esa es la red con la que se conecta 
+a la nube (internet)
+
+
+--levantar el puerto fa0/0 
+ Router#config t
+ Router(config)#int fa0/0
+ Router(config-if)#n sh
+ Router(config-if)#exit
+
+--levantar el puerto se0/0/0 
+ Router(config)#int se0/0/0
+ Router(config-if)#ip address 10.10.10.1 255.255.0.0
+ Router(config-if)#n sh
+ Router(config-if)#exit
+
+*ahora creamos una subinterfaz en el puerto fa0/0 para la nueva vlan
+
+
+ Router(config)#int fa 0/0.2
+ Router(config-subif)#encapsulation dot1q 2
+ Router(config-subif)#ip address 160.12.12.3 255.255.0.0
+ Router(config-subif)#n shu
+ Router(config-subif)#exit
+
+*la interfaz fa 0/0 debe poseer el gateway de la red
+
+ Router(config)#int fa 0/0
+ Router(config-if)#encapsulation dot1q 3
+ Router(config-if)#ip address 160.12.0.1 255.255.0.0
+ Router(config-if)#n shu
+ Router(config-if)#exit
+
+*ahora crearemos la acces list que estara asociada a la sub interfaz
+ del servidor la cual solo debe permitir el acceso del exterior
+
+ Router(config)#access-list 1 deny 160.12.0.0 0.0.0.0
+ Router(config)#access-list 1 permit any 
+ Router(config)#int fa 0/0.2
+ Router(config-subif)#ip access-group 1 out
+ Router(config-subif)#n sh
+ Router(config-subif)#exit
+
+las maquinas locales pueden generar trafico entre si y del exterior
+y como son parte de la vlan por defecto no requieren acl
+pero no pueden enviar trafico al servidor

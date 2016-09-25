@@ -1,0 +1,143 @@
+1)redes:
+
+maquinas con mascara 24
+ pc1=192.168.1.1 vlan2....gateway=192.168.1.2
+ pc2=192.168.2.1 vlan3....gateway=192.168.2.2
+
+ pc3=192.168.3.1 vlan2....gateway=192.168.3.2
+ pc4=192.168.4.1 vlan3....gateway=192.168.4.2
+
+2)creacion de vlans
+
+switch 1:
+
+*vlan2
+ Switch>enable
+ Switch#config t
+ Switch(config)#vlan 2
+ Switch(config-vlan)#name vlan2
+ Switch(config-vlan)#exit
+
+*vlan3
+ Switch(config)#vlan 3
+ Switch(config-vlan)#name vlan3
+ Switch(config-vlan)#exit
+
+*asignacion de puerto vlan2
+ Switch(config)#int Fa0/1
+ Switch(config-if)#switchport access vlan 2
+ Switch(config-if)#exit
+
+*asignacion de puerto vlan3
+ Switch(config)#int Fa0/2
+ Switch(config-if)#switchport access vlan 3
+ Switch(config-if)#exit
+
+*puerto truncal
+ Switch(config)#int Fa0/3
+ Switch(config-if)#switchport mode trunk
+ Switch(config-if)#exit
+
+switch 2:
+
+*vlan2
+ Switch>enable
+ Switch#config t
+ Switch(config)#vlan 2
+ Switch(config-vlan)#name vlan2
+ Switch(config-vlan)#exit
+
+*vlan3
+ Switch(config)#vlan 3
+ Switch(config-vlan)#name vlan3
+ Switch(config-vlan)#exit
+
+*asignacion de puerto vlan2
+ Switch(config)#int Fa0/1
+ Switch(config-if)#switchport access vlan 2
+ Switch(config-if)#exit
+
+*asignacion de puerto vlan3
+ Switch(config)#int Fa0/2
+ Switch(config-if)#switchport access vlan 3
+ Switch(config-if)#exit
+
+*puerto truncal
+ Switch(config)#int Fa0/3
+ Switch(config-if)#switchport mode trunk
+ Switch(config-if)#exit
+
+3)router
+
+*levantar los puertos fa0/0 y fa0/1
+ Router#config t
+ Router(config)#int fa0/0
+ Router(config-if)#n sh
+ Router(config-if)#exit
+
+ Router(config)#int fa0/1
+ Router(config-if)#n sh
+ Router(config-if)#exit
+
+*creacion de las sub interfaces para las vlans
+---en el puerto 0/0
+
+ Router(config)#int fa 0/0.2
+ Router(config-subif)#encapsulation dot1q 2
+ Router(config-subif)#ip address 192.168.1.2 255.255.255.0
+ Router(config-subif)#n shu
+ Router(config-subif)#exit
+
+ Router(config)#int fa 0/0.3
+ Router(config-subif)#encapsulation dot1q 3
+ Router(config-subif)#ip address 192.168.2.2 255.255.255.0
+ Router(config-subif)#n shu
+ Router(config-subif)#exit
+
+---en el puerto 0/1
+
+ Router(config)#int fa 0/1.2
+ Router(config-subif)#encapsulation dot1q 2
+ Router(config-subif)#ip address 192.168.3.2 255.255.255.0
+ Router(config-subif)#n shu
+ Router(config-subif)#exit
+
+ Router(config)#int fa 0/1.3
+ Router(config-subif)#encapsulation dot1q 3
+ Router(config-subif)#ip address 192.168.4.2 255.255.255.0
+ Router(config-subif)#n shu
+ Router(config-subif)#exit
+
+*acces lists
+ Router(config)#access-list 1 permit 192.168.1.0 0.0.0.255
+ Router(config)#access-list 1 deny any
+ 
+ Router(config)#access-list 2 permit 192.168.2.0 0.0.0.255
+ Router(config)#access-list 2 deny any
+
+ Router(config)#access-list 3 permit 192.168.3.0 0.0.0.255
+ Router(config)#access-list 3 deny any
+
+ Router(config)#access-list 4 permit 192.168.4.0 0.0.0.255
+ Router(config)#access-list 4 deny any
+
+*asignar acl a los puertos
+ Router(config)#int fa 0/1.2
+ Router(config-subif)#ip access-group 1 out
+ Router(config-subif)#n sh
+ Router(config-subif)#exit
+
+ Router(config)#int fa 0/1.3
+ Router(config-subif)#ip access-group 2 out
+ Router(config-subif)#n sh
+ Router(config-subif)#exit
+
+ Router(config)#int fa 0/0.2
+ Router(config-subif)#ip access-group 3 out
+ Router(config-subif)#n sh
+ Router(config-subif)#exit
+ 
+ Router(config)#int fa 0/0.3
+ Router(config-subif)#ip access-group 4 out
+ Router(config-subif)#n sh
+ Router(config-subif)#exit
